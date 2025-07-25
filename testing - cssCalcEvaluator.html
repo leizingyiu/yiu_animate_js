@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CSSCalcEvaluator Test</title>
+    <style>
+        :root {
+            --base-size: 20px;
+        }
+
+        .test-box {
+            width: 50vw;
+            font-size: 18px;
+            --gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="test-box" id="testEl"
+        data-padding="8"
+        style="--custom-unit: 3rem;">
+        测试元素
+    </div>
+
+    <div>
+        <h3>Expression:</h3>
+        <input id="expression"
+            value="calc(var(--gap) + 2em + 10vw - attr(data-padding px))"
+            style="width: 100%">
+
+        <h3>Output Unit:</h3>
+        <select id="unit">
+            <option value="px">px</option>
+            <option value="rem">rem</option>
+            <option value="em">em</option>
+            <option value="vw">vw</option>
+        </select>
+
+        <br><br>
+        <button
+            onclick="runTest()">Evaluate</button>
+        <pre id="result">点击 Evaluate 进行测试</pre>
+    </div>
+    <!-- <script src='./yiu_cssCalcEvaluator.js' type="module"></script> -->
+    <script type="module">
+
+        import CSSCalcEvaluator from './utils/yiu_cssCalcEvaluator.js';
+
+
+        // 实例化
+        const evaluator = new CSSCalcEvaluator({ updateInterval: 200 });
+
+        window.runTest = () => {
+            const expression = document.getElementById('expression').value;
+            const unit = document.getElementById('unit').value;
+            const dom = document.getElementById('testEl');
+
+            console.log(dom, 'Evaluating expression:', expression, 'Unit:', unit);
+            const result = evaluator.evaluate(dom, expression, unit);
+            document.getElementById('result').textContent = `结果: ${result} `;
+            dom.style.setProperty('--computed-value', result + unit);
+            dom.style.setProperty('--source-value', expression);
+        }
+    </script>
+</body>
+
+</html>

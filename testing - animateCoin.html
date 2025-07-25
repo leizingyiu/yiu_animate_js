@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1" />
+    <title>3D Rotating Coin</title>
+    <script type="module"
+        src="./yiu_animate.js"></script>
+
+    <!-- <script> import CSSCalcEvaluator from "./yiu_cssCalcEvaluator.js"; </script> -->
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            perspective: 1000px;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .coin-container {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            transform-style: preserve-3d;
+
+            --yiu-animate-start-transform: translate3D(0vmin, calc(60vh + 0), 0), rotateX(0deg):easeInOut:400:delay(100);
+            /* --yiu-animate-start-transform: translate3D(0vmin, 60vh, 0), rotateX(0deg):easeInOut:400:delay(100); */
+            --yiu-animate-end-transform: translate3D(0vmin, 0vh, 0), rotateX(-360deg);
+            --yiu-animate-ease-fn: easeOutElastic;
+            --yiu-animate-ease-dura: 2000;
+            --yiu-animate-delay: 100;
+
+            --motion-blur: 60;
+
+        }
+
+        .coin-face {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: absolute;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            color: #fff;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            --thick: 5px;
+        }
+
+        .coin-face.front {
+            background-color: gold;
+            border: 5px solid #ccad00;
+            /* transform: rotateY(0) translateZ(5px); */
+            transform: rotateY(0) translateZ(var(--thick));
+        }
+
+        .coin-face.back {
+            background-color: gold;
+            border: 5px solid #ccad00;
+            /* transform: rotateY(180deg) translateZ(5px); */
+            transform: rotateY(180deg) translateZ(var(--thick));
+        }
+
+        .coin-edge {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: absolute;
+            background-color: #b8860b;
+            box-sizing: border-box;
+        }
+
+        #title {
+            --yiu-animate-start-transform: translate3D(0vmin, -10vh, 0):easeOutElastic:1724:delay(450);
+            --yiu-animate-end-transform: translate3D(0vmin, 0vh, 0);
+            --yiu-animate-start-opacity: 0:linear:500:delay(300);
+            --yiu-animate-end-opacity: 1;
+            --yiu-animate-ease-fn: easeOutElastic;
+            --yiu-animate-ease-dura: 1724;
+        }
+
+        @keyframes rotateCoin {
+            from {
+                transform: rotateX(0);
+            }
+
+            to {
+                transform: rotateX(-360deg);
+            }
+        }
+    </style>
+</head>
+
+<body
+    onclick="    start_animation(document.querySelector('.coin-container')); start_animation(document.querySelector('#title'));    ">
+    <h1 id="title">Click to flip the coin!</h1>
+    <div id="coinPop">
+        <div class="coin-container" id="coin">
+            <div class="coin-face front">Front
+            </div>
+            <div class="coin-face back">Back</div>
+        </div>
+    </div>
+
+
+    <script>
+        const coin = document.getElementById('coin');
+        const thickness = 30; // px thickness on each side
+        const layers = thickness * 2 + 1;
+
+        for (let i = -thickness; i <= thickness; i++) {
+            const edge = document.createElement('div');
+            edge.className = 'coin-edge';
+            edge.style.transform = `rotateY(0deg) translateZ(${i}px)`;
+            coin.insertBefore(edge, coin.firstChild); // 插入在 face 之前
+        }
+
+        let style = document.createElement('style');
+        style.innerHTML = `
+        .coin-face {
+            --thick: ${thickness + 1}px;
+        }
+        `;
+        document.head.appendChild(style);
+    </script>
+
+
+
+</body>
+
+</html>
