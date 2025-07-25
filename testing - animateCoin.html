@@ -5,7 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport"
         content="width=device-width, initial-scale=1" />
-    <title>3D Rotating Coin</title>
+    <title>3D Rotating Coin (powered by
+        yiu_animate_js)</title>
     <script type="module"
         src="./yiu_animate.js"></script>
 
@@ -80,7 +81,7 @@
             box-sizing: border-box;
         }
 
-        #title {
+        .dropWithCoin {
             --yiu-animate-start-transform: translate3D(0vmin, -10vh, 0):easeOutElastic:1724:delay(450);
             --yiu-animate-end-transform: translate3D(0vmin, 0vh, 0);
             --yiu-animate-start-opacity: 0:linear:500:delay(300);
@@ -102,8 +103,10 @@
 </head>
 
 <body
-    onclick="    start_animation(document.querySelector('.coin-container')); start_animation(document.querySelector('#title'));    ">
-    <h1 id="title">Click to flip the coin!</h1>
+    onclick="    start_animation(document.querySelector('.coin-container'));
+     document.querySelectorAll('.dropWithCoin').forEach(d=>start_animation(d));    ">
+    <h1 id="title" class="dropWithCoin">Click to
+        flip the coin!</h1>
     <div id="coinPop">
         <div class="coin-container" id="coin">
             <div class="coin-face front">Front
@@ -111,6 +114,8 @@
             <div class="coin-face back">Back</div>
         </div>
     </div>
+    <h2 class="dropWithCoin">testing</h2>
+    <p class="dropWithCoin">testing</p>
 
 
     <script>
