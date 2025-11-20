@@ -310,9 +310,11 @@
     </script>
 </head>
 
-<body
-    onclick="    
-     document.querySelectorAll('.animate').forEach(d=>start_animation(d));    "
+<body onclick="    
+    document.querySelectorAll('.animate').forEach(d=>start_animation(d));   
+    document.getElementById('_svg').classList.remove('showArrow');
+    setTimeout(()=>{ document.getElementById('_svg').classList.add('showArrow');},500)
+    "
     onload=" document.querySelectorAll('.animate').forEach(d=>start_animation(d));   ">
 
 
@@ -352,6 +354,7 @@
 
     <style>
         .showArrow {
+            transition: opacity 1s ease;
             opacity: 1 !important;
         }
 
@@ -382,7 +385,7 @@
         version="1.1" x="0px" y="0px"
         viewBox="0 0 833 1054"
         xml:space="preserve" class=" animate "
-        style="z-index: 999999;position: fixed; top: 0; left: 0; z-index: 999; enable-background: accumulate;opacity: 0; transition: opacity 1s ease ;">
+        style="z-index: 999999;position: fixed; top: 0; left: 0; z-index: 999; enable-background: accumulate;opacity: 0;">
 
         <!-- 主箭头 path -->
         <path id="arrow" class="animated-dash"
