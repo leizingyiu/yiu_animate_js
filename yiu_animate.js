@@ -65,88 +65,106 @@ function parseTransformEase(str, dom) {
     const evaluator = new CSSCalcEvaluator({ updateInterval: 200 });
 
     const segments = [];
-    let current = '', depth = 0;
+    let current = '';
+    let depth = 0;
+
+    // -----------------------------
+    // 1️⃣ 拆分 transform 函数（空格或逗号分隔，括号内部不拆）
+    // -----------------------------
     for (let char of str) {
-        if (char === '(') depth++;
-        if (char === ')') depth--;
-        if (char === ',' && depth === 0) {
-            segments.push(current.trim());
-            current = '';
-        } else current += char;
+        switch (char) {
+            case '(':
+                depth++;
+                current += char;
+                break;
+            case ')':
+                depth--;
+                current += char;
+                break;
+            case ' ':
+            case ',':
+                if (depth === 0) {   // 顶层分隔符
+                    if (current.trim()) segments.push(current.trim());
+                    current = '';
+                    break;
+                }
+                current += char;       // 括号内部空格/逗号直接加
+                break;
+            default:
+                current += char;
+        }
     }
     if (current.trim()) segments.push(current.trim());
 
-    console.log('input', str, 'Segments:', segments);
-
+    // -----------------------------
+    // 2️⃣ 分离每个 transform 的冒号参数
+    // -----------------------------
     const unitDict = {
-        "translate": "px",
-        "translateX": "px",
-        "translateY": "px",
-        "scale": "",
-        "scaleX": "",
-        "scaleY": "",
-        "rotate": "deg",
-        "skew": "deg",
-        "skewX": "deg",
-        "skewY": "deg",
-        "translate3d": "px",
-        "translateZ": "px",
-        "scale3d": "",
-        "scaleZ": "",
-        "rotateX": "deg",
-        "rotateY": "deg",
-        "rotateZ": "deg",
-        "rotate3d": "deg",
+        "translate": "px", "translateX": "px", "translateY": "px",
+        "scale": " ", "scaleX": " ", "scaleY": " ",
+        "rotate": "deg", "skew": "deg", "skewX": "deg", "skewY": "deg",
+        "translate3d": "px", "translateZ": "px",
+        "scale3d": "", "scaleZ": "",
+        "rotateX": "deg", "rotateY": "deg", "rotateZ": "deg", "rotate3d": "deg",
         "perspective": "px"
     };
 
+    let globalEase = null;
+    let globalDuration = null;
+    let globalDelay = null;
+
+    // -----------------------------
+    // 3️⃣ 解析每个 segment
+    // -----------------------------
     const result = segments.map(segment => {
         const parts = segment.split(':').map(s => s.trim());
-        const match = parts[0].match(/^(\w+)\((.+)\)$/);
+        const match = parts[0].match(/(\w+)\(([^(]+)\)/);
         if (!match) return null;
 
         const fn = match[1];
-        const args = match[2].split(',').map(v => v.trim()).map(_a => evaluator.evaluate(dom, _a, unitDict[fn] || 'px'));
-        let ease = null, delay = null, duration = null;
+        const args = match[2]
+            .split(',')
+            .map(v => v.trim())
+            .map(_a => evaluator.evaluate(dom, _a, unitDict[fn] || 'px'));
 
-        // console.log('_________________');
-        // console.log('Parsed segment:', segment, 'Parts:', parts);
+        let ease = null, duration = null, delay = null;
 
         for (let i = 1; i < parts.length; i++) {
-            if (parts[i].startsWith('delay(')) {
-                console.log('Found delay:', parts[i]);
-                const delayNum = parts[i].match(/delay\((\d+)\)/);
-                if (delayNum) {
-                    delay = parseFloat(delayNum[1]);
-                }
-            }
-            else if (isFinite(Number(parts[i]))) {
-                console.log('Found duration:', parts[i]);
-                duration = parseFloat(parts[i]);
-            } else if (parts[i].startsWith('dura(')) {
-                console.log('Found duration:', parts[i]);
-                const durationNum = parts[i].match(/dura\((\d+)\)/);
-                if (durationNum) {
-                    duration = parseFloat(durationNum[1]);
-                }
-            }
-            else {
-                console.log('Found ease:', parts[i]);
-                ease = parts[i];
+            const p = parts[i];
+            if (p.startsWith('delay(')) {
+                const m = p.match(/delay\((\d+)\)/);
+                if (m) delay = parseFloat(m[1]);
+            } else if (p.startsWith('dura(')) {
+                const m = p.match(/dura\((\d+)\)/);
+                if (m) duration = parseFloat(m[1]);
+            } else if (isFinite(Number(p))) {
+                duration = parseFloat(p);
+            } else {
+                ease = p;
             }
         }
 
-        // console.log('Function:', fn, 'Args:', args, 'Ease:', ease, 'Duration:', duration, 'Delay:', delay);
-
-        // console.log('_________________');
-
+        // 保存最后解析到的全局参数
+        if (ease) globalEase = ease;
+        if (duration != null) globalDuration = duration;
+        if (delay != null) globalDelay = delay;
 
         return { fn, args, ease, duration, delay, raw: segment };
     }).filter(Boolean);
 
-    // console.log('Parsed transforms:', result);
+    // -----------------------------
+    // 4️⃣ 将全局参数应用到没有单独指定参数的 transform
+    // -----------------------------
+    for (let t of result) {
+        if (t.ease == null) t.ease = globalEase;
+        if (t.duration == null) t.duration = globalDuration;
+        if (t.delay == null) t.delay = globalDelay;
+    }
+
+    console.log('Parsed transforms result :', result);
     return result;
 }
+
 
 function parseOpacityEase(str, globalDefaults = {}) {
     if (!str) return null;
@@ -196,7 +214,6 @@ function start_animation(dom) {
     const defaultDuration = parseFloat(styles.getPropertyValue('--yiu-animate-ease-dura')) || 2000;
     const globalDelay = parseFloat(styles.getPropertyValue('--yiu-animate-delay')) || 0;
 
-    console.log(startStr);
     const startList = parseTransformEase(startStr, dom);
     const endList = parseTransformEase(endStr, dom);
 
@@ -210,8 +227,6 @@ function start_animation(dom) {
     });
 
     const endOpacity = endOpacityStr ? parseFloat(endOpacityStr) : null;
-
-
 
     const transforms = startList.map((startItem, i) => {
         const endItem = endList[i];
@@ -271,9 +286,11 @@ function start_animation(dom) {
 
 
         const transformStr = transforms.map(t => {
+
             const tElapsed = elapsed - t.delay;
             if (tElapsed < 0) return `${t.fn}(${t.startArgs.join(', ')})`;
             const progress = Math.min(tElapsed / t.duration, 1);
+
             const eased = t.ease(progress);
 
             // console.log("t.startArgs, t.endArgs");
@@ -281,6 +298,7 @@ function start_animation(dom) {
             // console.log(t.startArgs.map(_a => evaluator.evaluate(dom, _a, 'px')),
             //     t.endArgs.map(_a => evaluator.evaluate(dom, _a, 'px'))
             // );
+
 
             const args = interpolateArgs(t.startArgs, t.endArgs, eased);
             // const args = interpolateArgs(

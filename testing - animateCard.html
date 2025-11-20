@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1" />
+    <title>3D Rotating Coin (powered by
+        yiu_animate_js)</title>
+    <script type="module"
+        src="./yiu_animate.js"></script>
+
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #2c2c2c;
+            margin: 0;
+            perspective: 1000px;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        #container {
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5.4vh;
+            align-items: center;
+            text-align: center;
+        }
+
+        #upper {
+            background-color: #9F0014;
+            display: flex;
+            width: 24.5vh;
+            height: 47.45vh;
+            max-width: 53vw;
+            flex-direction: column;
+            align-items: center;
+            border-radius: 10px;
+        }
+
+        #upper #block {
+            width: 23vh;
+            height: 12.5vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #cccccc;
+            position: relative;
+            top: 15.7vh;
+            border-radius: 10px;
+        }
+
+        #upper #block #btn {
+            border-radius: 999999999px;
+            display: block;
+            font-size: 1.14vh;
+            position: relative;
+            top: 10vh;
+            color: white;
+            background-color: #df001f;
+            padding: 0.3vh 1vh;
+        }
+
+
+        #lower {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5vh;
+            align-items: center;
+        }
+
+        #lower #txt {
+            color: white;
+            font-size: 1.7vh;
+        }
+
+        #lower #lowerBtn {
+            font-size: 3.695vh;
+            font-weight: 700;
+            color: white;
+            padding: 1vh 5vh;
+            background-color: red;
+            border-radius: 999px;
+            border: solid 0.45vh white;
+        }
+
+
+        .drop {
+            --yiu-animate-start-transform: translate3D(0vmin, -50vh, 0):easeOutElastic:1724:delay(450);
+            --yiu-animate-end-transform: translate3D(0vmin, 0vh, 0);
+            --yiu-animate-start-opacity: 0:linear:500:delay(300);
+            --yiu-animate-end-opacity: 1;
+            --yiu-animate-ease-fn: easeOutElastic;
+            --yiu-animate-ease-dura: 1724;
+        }
+
+        .cardLarge {
+            --yiu-animate-start-transform: translate3D(0, 0vh, 0), scale(1):easeInOut:500:delay(500);
+            --yiu-animate-end-transform: translate3D(0, -4vh, 0), scale(1.7);
+            --yiu-animate-start-opacity: 1;
+            --yiu-animate-end-opacity: 1;
+            --yiu-animate-ease-fn: easeInOut;
+            --yiu-animate-ease-dura: 500;
+            --yiu-animate-delay: 300;
+
+            transform-origin: top center;
+        }
+
+        .btnLarge {
+            --yiu-animate-start-transform: translate3D(0, 0, 0) scale(1):easeInOut:500:delay(500);
+            --yiu-animate-end-transform: translate3D(0, 1vh, 0) scale(1.3);
+            --yiu-animate-start-opacity: 1;
+            --yiu-animate-end-opacity: 1;
+            --yiu-animate-ease-fn: easeInOut;
+            --yiu-animate-ease-dura: 500;
+        }
+
+        .throwup {
+            --yiu-animate-start-transform: translate3D(0vmin, 10vh, 0):delay(800);
+            --yiu-animate-end-transform: translate3D(0vmin, 0vh, 0);
+            --yiu-animate-start-opacity: 0:linear:500:delay(800);
+            --yiu-animate-end-opacity: 1;
+            --yiu-animate-ease-fn: easeOutElastic;
+            --yiu-animate-ease-dura: 2000;
+
+        }
+
+
+
+        .wiggle1_5 {
+            animation: shakeY 2.5s ease-in-out infinite;
+        }
+
+        .wiggle_1_5 {
+            animation: shakeY2 2.5s ease-in-out infinite;
+        }
+
+        @keyframes shakeY {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+
+
+            50% {
+                transform: translateY(9px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        @keyframes shakeY2 {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(3px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+    </style>
+
+    <script>
+        // ======== Anchor 映射 ========
+        const anchorMap = {
+            topLeft: (rect) => [rect.left, rect.top],
+            topCenter: (rect) => [rect.left + rect.width / 2, rect.top],
+            topRight: (rect) => [rect.right, rect.top],
+            centerLeft: (rect) => [rect.left, rect.top + rect.height / 2],
+            center: (rect) => [rect.left + rect.width / 2, rect.top + rect.height / 2],
+            centerRight: (rect) => [rect.right, rect.top + rect.height / 2],
+            bottomLeft: (rect) => [rect.left, rect.bottom],
+            bottomCenter: (rect) => [rect.left + rect.width / 2, rect.bottom],
+            bottomRight: (rect) => [rect.right, rect.bottom],
+        };
+
+        // ======== CSS 单位解析 ========
+        function parseCssOffset(value, reference = 1) {
+            if (typeof value === 'number') return value;
+            if (typeof value === 'string') {
+                if (value.endsWith('px')) return parseFloat(value);
+                if (value.endsWith('%')) return parseFloat(value) / 100 * reference;
+                if (value.endsWith('em') || value.endsWith('rem')) {
+                    const fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+                    return parseFloat(value) * fontSize;
+                }
+                return parseFloat(value);
+            }
+            return 0;
+        }
+
+        // ======== 获取元素全局位置 ========
+        function getElementGlobalPosition(el, anchor = 'center', offset = { x: 0, y: 0 }) {
+            if (!el) return [0, 0];
+            const rect = el.getBoundingClientRect();
+            let [x, y] = (anchorMap[anchor] || anchorMap.center)(rect);
+            x += parseCssOffset(offset.x, rect.width);
+            y += parseCssOffset(offset.y, rect.height);
+
+            // 如果需要滚动补偿
+            const scrollX = window.scrollX || window.pageXOffset;
+            const scrollY = window.scrollY || window.pageYOffset;
+            x += scrollX;
+            y += scrollY;
+
+            return [x, y];
+        }
+
+        // ======== 核心更新箭头 ========
+        function updateArrow({
+            fromDom, toDom,
+            fromAnchor = 'center', toAnchor = 'center',
+            fromOffset = { x: 0, y: 0 }, toOffset = { x: 0, y: 0 },
+            fillColor = 'red',
+            curveLength = 50,
+            arrowPath
+        }) {
+            const svg = document.querySelector('svg');
+            const path = document.getElementById('arrow');
+            const head = document.getElementById('arrowHead');
+            if (!svg || !path || !head || !fromDom || !toDom) return;
+
+            const [startX, startY] = getElementGlobalPosition(fromDom, fromAnchor, fromOffset);
+            const [endX, endY] = getElementGlobalPosition(toDom, toAnchor, toOffset);
+
+            // 贝塞尔控制点（曲线方向）
+            const qX = (startX + endX) / 2 - curveLength;
+            const qY = (startY + endY) / 2;
+
+            const d = `M ${startX},${startY} Q ${qX},${qY} ${endX},${endY}`;
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', fillColor);
+            path.setAttribute('fill', 'transparent');
+            path.setAttribute('stroke-width', 2);
+
+            // stroke 动画（仅首次 draw）
+            if (!path.dataset.drawn) {
+                const length = path.getTotalLength();
+                path.style.transition = 'none';
+                path.style.strokeDasharray = length;
+                path.style.strokeDashoffset = length;
+                void path.offsetWidth;
+                path.style.transition = 'stroke-dashoffset 0.8s linear';
+                path.style.strokeDashoffset = 0;
+                path.dataset.drawn = 'true';
+            }
+
+            // 箭头头部
+            if (typeof arrowPath === 'function') {
+                arrowPath({ start: [startX, startY], end: [endX, endY], svg });
+            } else {
+                const size = 16;
+                // 计算末端切线方向
+                const t = 0.99;
+                const px = (1 - t) * (1 - t) * startX + 2 * (1 - t) * t * qX + t * t * endX;
+                const py = (1 - t) * (1 - t) * startY + 2 * (1 - t) * t * qY + t * t * endY;
+                const angle = Math.atan2(endY - py, endX - px);
+
+                const p1 = [endX, endY];
+                const p2 = [endX - size * Math.cos(angle - Math.PI / 6), endY - size * Math.sin(angle - Math.PI / 6)];
+                const p3 = [endX - size * Math.cos(angle + Math.PI / 6), endY - size * Math.sin(angle + Math.PI / 6)];
+                head.setAttribute('points', `${p1.join(',')} ${p2.join(',')} ${p3.join(',')}`);
+                head.setAttribute('fill', fillColor);
+            }
+
+            svg.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+        }
+
+        // ======== 绘制箭头 ========
+        function drawArrow(options) {
+            const { delay = 0 } = options;
+            setTimeout(() => updateArrow(options), delay);
+        }
+
+        // ======== 刷新箭头 ========
+        function refreshArrow(options) {
+            updateArrow(options);
+        }
+
+        // ======== 自动刷新箭头 ========
+        function autoRefreshArrow(options) {
+            if (!options.fromDom || !options.toDom) return () => { };
+            let stopped = false;
+            const loop = () => {
+                if (stopped) return;
+                refreshArrow(options);
+                requestAnimationFrame(loop);
+            };
+            loop();
+            return () => { stopped = true; };
+        }
+
+    </script>
+</head>
+
+<body
+    onclick="    
+     document.querySelectorAll('.animate').forEach(d=>start_animation(d));    "
+    onload=" document.querySelectorAll('.animate').forEach(d=>start_animation(d));   ">
+
+
+
+
+
+    <div id="container">
+
+        <div id="upper" class="drop  animate ">
+
+            <div class="wiggle1_5">
+
+                <div id="block"
+                    class=" cardLarge  animate ">
+
+                    <div class="wiggle_1_5">
+                        <div id="btn"
+                            class=" btnLarge  animate ">
+                            参与活动并注册会员</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="lower" class="  throwup animate">
+            <div id="txt">
+                跳转美团小程序，点击“报名”<br>才可成功参与活动哦
+            </div>
+            <div id="lowerBtn">前往参与</div>
+        </div>
+    </div>
+
+
+
+
+
+    <style>
+        .showArrow {
+            opacity: 1 !important;
+        }
+
+        .animated-dash {
+            --L: 800;
+            --l: 10;
+            stroke-dasharray: var(--l) var(--l) var(--l) var(--l);
+            /* 虚线长度 + 间隙长度 */
+            stroke-dashoffset: var(--L);
+            /* 初始偏移 = 虚线总长度 */
+            animation: dashMove 2s linear infinite;
+            transition: all 1s ease;
+        }
+
+        @keyframes dashMove {
+            from {
+                stroke-dashoffset: var(--L);
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+    </style>
+    <svg id="_svg"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        version="1.1" x="0px" y="0px"
+        viewBox="0 0 833 1054"
+        xml:space="preserve" class=" animate "
+        style="z-index: 999999;position: fixed; top: 0; left: 0; z-index: 999; enable-background: accumulate;opacity: 0; transition: opacity 1s ease ;">
+
+        <!-- 主箭头 path -->
+        <path id="arrow" class="animated-dash"
+            stroke-linejoin="round"
+            fill="transparent"
+            stroke="hsla(7.2,100%,50%,1)"
+            stroke-width="2"
+            style="transition: opacity 1s ease ;  ">
+
+        </path>
+
+        <!-- 可选：箭头头部 polygon -->
+        <polygon id="arrowHead"
+            fill="hsla(7.2,100%,50%,1)"
+            points="0,0 0,0 0,0"></polygon>
+    </svg>
+
+
+    <script>
+
+
+        const fromDom = document.querySelector('#txt');
+        const toDom = document.querySelector('#btn');
+        const fromOffset = { x: 10, y: -10 },
+            toOffset = { x: 10, y: 0 };
+        const L = -150;
+        setTimeout(() => {
+
+            document.getElementById('_svg').classList.add('showArrow');
+
+            drawArrow({
+                fromDom, toDom,
+                fromAnchor: 'centerRight', toAnchor: 'centerRight',
+                fromOffset: fromOffset, toOffset: toOffset,
+                fillColor: '#fff',
+                delay: 4000,
+                curveLength: L
+            });
+
+            autoRefreshArrow({
+                fromDom, toDom,
+                fromAnchor: 'centerRight', toAnchor: 'centerRight',
+                fromOffset: fromOffset, toOffset: toOffset,
+                fillColor: '#fff',
+                delay: 4000,
+
+                curveLength: L
+            });
+
+        }, 1200);
+
+
+
+
+
+
+        function getPathLength(selector) {
+            // 1. 通过选择器获取 path 元素
+            const pathElement = document.querySelector(selector);
+
+            // 2. 检查元素是否存在
+            if (!pathElement || pathElement.tagName.toLowerCase() !== 'path') {
+                console.error(`未找到元素或元素不是 <path> 标签: ${selector}`);
+                return null;
+            }
+
+            // 3. 使用原生的 getTotalLength() 方法
+            const length = pathElement.getTotalLength();
+
+            return length;
+        }
+
+
+
+
+
+        // setTimeout(() => {
+        //     let l = getPathLength('#arrow');
+        //     alert(l);
+        // }, 5000);
+    </script>
+</body>
+
+</html>
