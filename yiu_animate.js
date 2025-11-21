@@ -118,14 +118,17 @@ function parseTransformEase(str, dom) {
     // -----------------------------
     const result = segments.map(segment => {
         const parts = segment.split(':').map(s => s.trim());
-        const match = parts[0].match(/(\w+)\(([^(]+)\)/);
+        // const match = parts[0].match(/^(\w+)\(([^(]+)\)$/);
+        const match = parts[0].match(/^(\w+)\((.+)\)$/);
         if (!match) return null;
 
         const fn = match[1];
         const args = match[2]
             .split(',')
             .map(v => v.trim())
-            .map(_a => evaluator.evaluate(dom, _a, unitDict[fn] || 'px'));
+            .map(_a => {
+                return evaluator.evaluate(dom, _a, unitDict[fn] || 'px')
+            });
 
         let ease = null, duration = null, delay = null;
 
@@ -311,7 +314,6 @@ function start_animation(dom) {
 
 
 
-        console.log(dom.id, "elapsed:", elapsed, '\tTransform string:', transformStr);
         dom.style.transform = transformStr;
 
         if (startOpacity && endOpacity !== null) {
